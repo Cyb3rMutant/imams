@@ -1,0 +1,23 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Register as an Imam — Imams Connect{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1>Register as an Imam</h1>
+    <p class="subtitle">Submit your details. You'll receive an ID to log in and see your upcoming bookings.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <ul class="error-list">
+              {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn">Register</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Training — {{ imam.name }}{% endblock %}
+{% block extra_style %}
+  .trained-banner { background: #d8f3dc; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.5rem; color: #1b4332; font-weight: 600; }
+  .fail-banner { background: #fff3cd; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.5rem; color: #7d5a00; font-weight: 600; }
+  .video-row { display: flex; gap: 1.25rem; padding: 1.25rem 0; border-bottom: 1px solid #f0ede8; align-items: flex-start; }
+  .video-row:last-child { border-bottom: none; }
+  .video-index { min-width: 1.75rem; font-weight: 700; color: #bbb; font-size: 0.875rem; padding-top: 0.15rem; }
+  .video-body { flex: 1; min-width: 0; }
+  .video-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.65rem; }
+  .video-embed { width: 100%; aspect-ratio: 16/9; border: none; display: block; background: #111; border-radius: 6px; }
+  .video-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 16/9; background: #1b4332; border-radius: 6px; color: #d8f3dc; font-size: 2.5rem; text-decoration: none; }
+  .video-link { display: inline-block; margin-top: 0.5rem; font-size: 0.8rem; color: #1b4332; }
+  .quiz-section { margin-top: 0.5rem; }
+  .question-block { margin-bottom: 1.5rem; }
+  .question-text { font-weight: 600; font-size: 0.925rem; margin-bottom: 0.65rem; line-height: 1.5; }
+  .choice-label { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border: 1.5px solid #e0ddd8; border-radius: 6px; margin-bottom: 0.4rem; cursor: pointer; font-size: 0.9rem; transition: border-color 0.12s, background 0.12s; }
+  .choice-label:hover { border-color: #1b4332; background: #f7fdf9; }
+  .choice-label input[type=radio] { accent-color: #1b4332; flex-shrink: 0; }
+{% endblock %}
+{% block content %}
+  <div style="margin-bottom:1.5rem">
+    <h1>Training</h1>
+    <p class="subtitle">Watch the training videos, then pass the quiz to become eligible for Jumuah assignments.</p>
+  </div>
+
+  {% if is_trained %}
+    <div class="trained-banner">
+      <span style="font-size:1.6rem">✓</span>
+      <span>Quiz passed — you're eligible to be assigned as an Imam.</span>
+    </div>
+  {% elif attempt and not attempt.passed %}
+    <div class="fail-banner">
+      <span style="font-size:1.3rem">⚠</span>
+      <div>
+        <div>Quiz not passed — {{ attempt.score }} of {{ attempt.total }} correct.</div>
+        <div style="font-weight:400; margin-top:0.2rem; font-size:0.875rem">Review the videos and try again.</div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Videos -->
+  {% if videos %}
+    <div class="card" style="padding: 1.25rem 1.75rem">
+      <h2 style="margin-bottom:0.25rem">Training Videos</h2>
+      <p style="font-size:0.82rem; color:#888; margin-bottom:1rem">Watch each video before taking the quiz.</p>
+      {% for video in videos %}
+        <div class="video-row">
+          <div class="video-index">{{ forloop.counter }}</div>
+          <div class="video-body">
+            <div class="video-title">{{ video.title }}</div>
+            {% if video.youtube_id %}
+              <iframe class="video-embed"
+                      src="https://www.youtube-nocookie.com/embed/{{ video.youtube_id }}"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowfullscreen
+                      loading="lazy"
+                      title="{{ video.title }}"></iframe>
+            {% else %}
+              <a href="{{ video.url }}" target="_blank" rel="noopener" class="video-placeholder">▶</a>
+            {% endif %}
+            <a href="{{ video.url }}" target="_blank" rel="noopener" class="video-link">Open on YouTube ↗</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Quiz -->
+  {% if questions %}
+    <div class="card quiz-section">
+      <h2 style="margin-bottom:0.25rem">Quiz</h2>
+      <p style="font-size:0.82rem; color:#888; margin-bottom:1.5rem">Answer all questions correctly to complete your training.</p>
+
+      {% if is_trained %}
+        <p style="color:#1b4332; font-weight:600">✓ You have already passed the quiz.</p>
+      {% else %}
+        <form method="post" action="{% url 'submit_quiz' %}">
+          {% csrf_token %}
+          {% for q in questions %}
+            <div class="question-block">
+              <div class="question-text">{{ forloop.counter }}. {{ q.text }}</div>
+              {% for choice in q.choices.all %}
+                <label class="choice-label">
+                  <input type="radio" name="q{{ q.pk }}" value="{{ choice.pk }}" required>
+                  {{ choice.text }}
+                </label>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn">Submit Quiz</button>
+        </form>
+      {% endif %}
+    </div>
+  {% elif not videos %}
+    <div class="card">
+      <p class="empty">No training content has been added yet. Check back soon.</p>
+    </div>
+  {% endif %}
+{% endblock %}

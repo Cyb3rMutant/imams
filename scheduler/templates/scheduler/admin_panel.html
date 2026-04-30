@@ -1,0 +1,373 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Admin Panel — Imams Connect{% endblock %}
+{% block extra_style %}
+  /* Section nav */
+  .section-nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.35rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  width: fit-content;
+  }
+  .section-nav a {
+  padding: 0.45rem 1.1rem;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #555;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  }
+  .section-nav a:hover { background: #f0ede8; color: #1b4332; }
+  /* Section headings */
+  .section-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1b4332;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #d8f3dc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  }
+  .section-heading .count { font-weight: 400; color: #999; font-size: 0.9rem; }
+  /* Week nav */
+  .week-nav { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem; }
+  .week-nav a { color: #1b4332; font-size: 1.4rem; padding: 0.1rem 0.4rem; border-radius: 4px; text-decoration: none; line-height: 1; }
+  .week-nav a:hover { background: #d8f3dc; }
+  .week-label { font-size: 1.1rem; font-weight: 700; color: #1b4332; }
+  /* Stats */
+  .stats { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
+  .stat { background: #f7f5f0; border-radius: 7px; padding: 0.55rem 1rem; font-size: 0.82rem; color: #666; }
+  .stat strong { display: block; font-size: 1.1rem; color: #1b4332; }
+  /* Assign form */
+  .assign-form { display: flex; gap: 0.4rem; align-items: center; }
+  .assign-form select { flex: 1; padding: 0.38rem 0.55rem; font-size: 0.82rem; border: 1.5px solid #ccc; border-radius: 5px; }
+  .assign-form select:focus { border-color: #1b4332; outline: none; }
+  .assign-form button { padding: 0.38rem 0.75rem; background: #1b4332; color: #fff; border: none; border-radius: 5px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .assign-form button:hover { background: #2d6a4f; }
+  option:disabled { color: #bbb; }
+  option.pref { font-weight: 700; }
+  /* Mosque name cell */
+  .mosque-name { font-weight: 600; }
+  .mosque-meta { color: #888; font-size: 0.78rem; margin-top: 0.1rem; }
+  .req-tag { color: #c0392b; font-size: 0.72rem; }
+  .req-dot { display: inline-block; width: 7px; height: 7px; background: #c0392b; border-radius: 50%; margin-right: 4px; }
+  /* Two-col grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  /* Training video list */
+  .video-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0; border-bottom: 1px solid #f0ede8; }
+  .video-row:last-child { border-bottom: none; }
+  .video-order { width: 1.75rem; text-align: center; color: #bbb; font-weight: 700; font-size: 0.82rem; }
+  .video-info { flex: 1; min-width: 0; }
+  .video-info strong { display: block; font-size: 0.875rem; }
+  .video-info a { font-size: 0.78rem; color: #1b4332; word-break: break-all; }
+  /* Add video grid */
+  .add-grid { display: grid; grid-template-columns: 2fr 2fr 80px; gap: 0.75rem; align-items: end; }
+  /* Quiz */
+  .question-admin { border: 1px solid #f0ede8; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 0.75rem; }
+  .question-admin-text { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.4rem; }
+  .choice-list { list-style: none; font-size: 0.82rem; color: #555; }
+  .choice-list li { padding: 0.15rem 0; display: flex; align-items: center; gap: 0.5rem; }
+  .choice-correct { color: #1b4332; font-weight: 700; }
+  .add-q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.75rem; }
+{% endblock %}
+{% block content %}
+  <h1 style="margin-bottom:0.35rem">Admin Panel</h1>
+  <p class="subtitle">Schedule, registered mosques &amp; imams, and training videos — all in one place.</p>
+  <div class="section-nav">
+    <a href="#schedule">Schedule</a>
+    <a href="#mosques">Mosques</a>
+    <a href="#imams">Imams</a>
+    <a href="#training">Videos</a>
+    <a href="#quiz">Quiz</a>
+  </div>
+  <!-- ══ SCHEDULE ══════════════════════════════════════════════════════════════ -->
+  <div class="card" id="schedule">
+    <div class="section-heading">
+      Jumuah Schedule
+      <span class="count">{{ friday|date:"j F Y" }}</span>
+    </div>
+    <div class="week-nav">
+      <a href="?week={{ prev_friday|date:'Y-m-d' }}#schedule">&#8592;</a>
+      <span class="week-label">{{ friday|date:"l, j F Y" }}</span>
+      <a href="?week={{ next_friday|date:'Y-m-d' }}#schedule">&#8594;</a>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <strong>{{ total_mosques }}</strong> Requests
+      </div>
+      <div class="stat">
+        <strong>{{ total_assigned }}</strong> Assigned
+      </div>
+      <div class="stat">
+        <strong>{{ total_unassigned }}</strong> Unassigned
+      </div>
+    </div>
+    {% if request_rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Mosque</th>
+            <th>Attendees</th>
+            <th>Assign Imam</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in request_rows %}
+            <tr>
+              <td>
+                <div class="mosque-name">
+                  {% if row.wr.mosque.requires_imam %}<span class="req-dot" title="Cannot run without imam"></span>{% endif %}
+                  {{ row.wr.mosque.name }}
+                </div>
+                <div class="mosque-meta">{{ row.wr.mosque.address }}</div>
+                {% if row.wr.mosque.preferred_imam %}
+                  <div class="mosque-meta">Prefers: {{ row.wr.mosque.preferred_imam.name }}</div>
+                {% endif %}
+              </td>
+              <td>{{ row.wr.mosque.attendees }}</td>
+              <td>
+                <form method="post" class="assign-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="assign">
+                  <input type="hidden" name="week" value="{{ friday|date:'Y-m-d' }}">
+                  <input type="hidden" name="request_id" value="{{ row.wr.pk }}">
+                  <select name="imam_id">
+                    <option value="">— Unassigned —</option>
+                    {% for opt in row.imam_options %}
+                      <option value="{{ opt.imam.pk }}"
+                              {% if opt.imam.pk == row.current_imam_id %}selected{% endif %}
+                              {% if opt.untrained or opt.busy %}disabled{% endif %}
+                              {% if opt.preferred %}class="pref"{% endif %}>
+                        {% if opt.preferred %}★{% endif %}
+                        {{ opt.imam.name }}
+                        {% if opt.untrained %}
+                          (not trained)
+                        {% elif opt.busy %}
+                          (assigned)
+                        {% elif opt.unavailable %}
+                          (unavailable)
+                        {% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit">Save</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No mosque requests for this Friday.</p>
+    {% endif %}
+  </div>
+  <!-- ══ MOSQUES + IMAMS ═══════════════════════════════════════════════════════ -->
+  <div class="two-col">
+    <div class="card" id="mosques" style="padding:0; overflow:hidden">
+      <div style="padding:1.1rem 1.25rem; border-bottom:1px solid #f0ede8">
+        <div class="section-heading" style="margin:0; border:none; padding:0">
+          Mosques <span class="count">({{ mosques.count }})</span>
+        </div>
+      </div>
+      {% if mosques %}
+        <table>
+          <thead>
+            <tr>
+              <th>Mosque</th>
+              <th>Attendees</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in mosques %}
+              <tr>
+                <td>
+                  {% if m.requires_imam %}<span class="req-dot" title="Cannot run without imam"></span>{% endif %}
+                  <strong>{{ m.name }}</strong>
+                  {% if m.preferred_imam %}
+                    <div style="color:#888; font-size:0.78rem">Prefers: {{ m.preferred_imam.name }}</div>
+                  {% endif %}
+                  <div style="color:#aaa; font-size:0.78rem">{{ m.phone }}</div>
+                </td>
+                <td>{{ m.attendees }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="empty">No mosques yet.</p>
+      {% endif %}
+    </div>
+    <div class="card" id="imams" style="padding:0; overflow:hidden">
+      <div style="padding:1.1rem 1.25rem; border-bottom:1px solid #f0ede8">
+        <div class="section-heading" style="margin:0; border:none; padding:0">
+          Imams <span class="count">({{ imams.count }})</span>
+        </div>
+      </div>
+      {% if imams %}
+        <table>
+          <thead>
+            <tr>
+              <th>Imam</th>
+              <th>Training</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for imam in imams %}
+              <tr>
+                <td>
+                  <strong>{{ imam.name }}</strong>
+                  <div style="color:#aaa; font-size:0.78rem">{{ imam.phone }}</div>
+                </td>
+                <td>
+                  {% if not has_quiz %}
+                    <span class="badge badge-gray">—</span>
+                  {% elif imam.quiz_passed %}
+                    <span class="badge badge-green">Trained</span>
+                  {% else %}
+                    <span class="badge badge-red">Not trained</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="empty">No imams yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  <!-- ══ TRAINING VIDEOS ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="training">
+    <div class="section-heading">
+      Training Videos <span class="count">({{ videos.count }})</span>
+    </div>
+    <form method="post" style="margin-bottom:1.5rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_video">
+      <div class="add-grid">
+        <div class="form-group" style="margin:0">
+          <label for="{{ video_form.title.id_for_label }}">Title</label>
+          {{ video_form.title }}
+          {% if video_form.title.errors %}
+            <ul class="error-list">
+              {% for e in video_form.title.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        <div class="form-group" style="margin:0">
+          <label for="{{ video_form.url.id_for_label }}">YouTube URL</label>
+          {{ video_form.url }}
+          {% if video_form.url.errors %}
+            <ul class="error-list">
+              {% for e in video_form.url.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        <div class="form-group" style="margin:0">
+          <label for="{{ video_form.order.id_for_label }}">Order</label>
+          {{ video_form.order }}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-sm" style="margin-top:0.75rem">Add Video</button>
+    </form>
+    {% if videos %}
+      {% for v in videos %}
+        <div class="video-row">
+          <div class="video-order">{{ v.order }}</div>
+          <div class="video-info">
+            <strong>{{ v.title }}</strong>
+            <a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.url }}</a>
+          </div>
+          <form method="post" onsubmit="return confirm('Remove this video?')">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_video">
+            <input type="hidden" name="video_pk" value="{{ v.pk }}">
+            <input type="hidden" name="week" value="{{ friday|date:'Y-m-d' }}">
+            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+          </form>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No training videos yet.</p>
+    {% endif %}
+  </div>
+  <!-- ══ QUIZ ════════════════════════════════════════════════════════════════ -->
+  <div class="card" id="quiz">
+    <div class="section-heading">
+      Quiz Questions <span class="count">({{ questions|length }})</span>
+    </div>
+    <!-- Add question form -->
+    <form method="post" style="margin-bottom:1.5rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_question">
+      <input type="hidden" name="week" value="{{ friday|date:'Y-m-d' }}">
+      <div class="form-group">
+        <label>Question</label>
+        <textarea name="question_text" rows="2" style="width:100%; padding:0.5rem 0.75rem; border:1.5px solid #ccc; border-radius:6px; font-family:inherit; font-size:0.9rem" placeholder="Enter question text…"></textarea>
+      </div>
+      <div class="add-q-grid">
+        <div class="form-group" style="margin:0">
+          <label>Choice A</label>
+          <input type="text" name="choice_a" placeholder="Choice A">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Choice B</label>
+          <input type="text" name="choice_b" placeholder="Choice B">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Choice C</label>
+          <input type="text" name="choice_c" placeholder="Choice C">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Choice D</label>
+          <input type="text" name="choice_d" placeholder="Choice D">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Correct answer</label>
+        <select name="correct_choice" style="width:auto">
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+          <option value="d">D</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-sm">Add Question</button>
+    </form>
+    <!-- Question list -->
+    {% if questions %}
+      {% for q in questions %}
+        <div class="question-admin">
+          <div class="question-admin-text">{{ forloop.counter }}. {{ q.text }}</div>
+          <ul class="choice-list">
+            {% for choice in q.choices.all %}
+              <li>
+                {% if choice.is_correct %}
+                  <span class="choice-correct">✓</span>
+                {% else %}
+                  <span style="color:#ddd">○</span>
+                {% endif %}
+                {{ choice.text }}
+              </li>
+            {% endfor %}
+          </ul>
+          <form method="post" style="margin-top:0.6rem" onsubmit="return confirm('Remove this question?')">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_question">
+            <input type="hidden" name="question_pk" value="{{ q.pk }}">
+            <input type="hidden" name="week" value="{{ friday|date:'Y-m-d' }}">
+            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+          </form>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No quiz questions yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

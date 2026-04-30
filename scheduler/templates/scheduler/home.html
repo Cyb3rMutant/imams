@@ -1,0 +1,53 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Imams Connect{% endblock %}
+{% block extra_style %}
+  .hero { text-align: center; padding: 4rem 0 2rem; }
+  .hero h1 { font-size: 2.2rem; margin-bottom: 0.6rem; }
+  .hero p { font-size: 1rem; color: #666; max-width: 460px; margin: 0 auto 2.5rem; line-height: 1.6; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .choice-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+  display: block;
+  }
+  .choice-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-2px); }
+  .choice-card .icon { font-size: 2.2rem; margin-bottom: 0.8rem; }
+  .choice-card h2 { font-size: 1.05rem; color: #1b4332; margin-bottom: 0.4rem; }
+  .choice-card p { font-size: 0.85rem; color: #777; line-height: 1.5; }
+  .login-row {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #888;
+  }
+  .login-row a { color: #1b4332; font-weight: 600; margin: 0 0.5rem; }
+{% endblock %}
+{% block content %}
+  <div class="hero">
+    <h1>Imams Connect</h1>
+    <p>Connecting mosques with qualified Imams for Jumuah across the community.</p>
+    <div class="cards">
+      <a href="{% url 'mosque_request' %}" class="choice-card">
+        <div class="icon">🕌</div>
+        <h2>Register your Mosque</h2>
+        <p>Sign up and request Imams for upcoming Jumuah dates.</p>
+      </a>
+      <a href="{% url 'imam_application' %}" class="choice-card">
+        <div class="icon">📖</div>
+        <h2>Register as an Imam</h2>
+        <p>Join the platform and get matched with mosques near you.</p>
+      </a>
+    </div>
+    <div class="login-row">
+      Already registered?
+      <a href="{% url 'mosque_login' %}">Mosque login</a> ·
+      <a href="{% url 'imam_login' %}">Imam login</a>
+    </div>
+  </div>
+{% endblock %}

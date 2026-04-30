@@ -1,0 +1,33 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Registered — Imams Connect{% endblock %}
+
+{% block extra_style %}
+.success-wrap { text-align: center; padding: 3rem 1rem; }
+.check { font-size: 3rem; margin-bottom: 1rem; }
+.id-box {
+  display: inline-block;
+  margin: 1.5rem auto;
+  padding: 1rem 2.5rem;
+  background: #d8f3dc;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1b4332;
+}
+.id-box strong { display: block; font-size: 2.5rem; letter-spacing: 0.1em; }
+.id-box small { font-size: 0.8rem; color: #2d6a4f; }
+.success-body { color: #555; max-width: 380px; margin: 0 auto 2rem; line-height: 1.6; }
+{% endblock %}
+
+{% block content %}
+<div class="card success-wrap">
+  <div class="check">✓</div>
+  <h1>{{ heading }}</h1>
+  <div class="id-box">
+    <small>Your login ID</small>
+    <strong>{{ pk }}</strong>
+    <small>Keep this — it's your username and password</small>
+  </div>
+  <p class="success-body">{{ body }}</p>
+  <a href="{{ login_url }}" class="btn">{{ login_label }}</a>
+</div>
+{% endblock %}

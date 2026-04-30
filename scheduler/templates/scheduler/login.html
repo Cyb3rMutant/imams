@@ -1,0 +1,44 @@
+{% extends "scheduler/base.html" %}
+{% block title %}{{ portal_type }} Login — Imams Connect{% endblock %}
+
+{% block extra_style %}
+.login-wrap { max-width: 380px; margin: 0 auto; }
+.login-wrap h1 { margin-bottom: 0.4rem; }
+.other-link { margin-top: 1.25rem; font-size: 0.875rem; color: #666; }
+.other-link a { color: #1b4332; font-weight: 600; }
+.error-box {
+  background: #fde8e8;
+  color: #c0392b;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="card">
+    <h1>{{ portal_type }} Login</h1>
+    <p class="subtitle">Enter your ID to access your portal.</p>
+
+    {% if error %}
+    <div class="error-box">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ action_url }}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="portal_id">Your ID</label>
+        <input type="number" id="portal_id" name="portal_id" min="1"
+               placeholder="e.g. 42" autofocus required>
+      </div>
+      <button type="submit" class="btn" style="width:100%">Log in</button>
+    </form>
+
+    <p class="other-link">
+      Not a {{ portal_type|lower }}? <a href="{{ other_url }}">{{ other_label }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

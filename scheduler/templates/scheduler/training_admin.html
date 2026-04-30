@@ -1,0 +1,69 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Training Videos — Admin{% endblock %}
+
+{% block extra_style %}
+.video-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f0ede8;
+}
+.video-row:last-child { border-bottom: none; }
+.video-order { width: 2rem; text-align: center; color: #aaa; font-size: 0.875rem; font-weight: 700; }
+.video-info { flex: 1; min-width: 0; }
+.video-info strong { display: block; font-size: 0.925rem; }
+.video-info a { font-size: 0.8rem; color: #1b4332; word-break: break-all; }
+.add-grid { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 0.75rem; align-items: end; }
+{% endblock %}
+
+{% block content %}
+<h1>Training Videos</h1>
+<p class="subtitle">Add YouTube videos that imams must complete before they can be assigned.</p>
+
+<div class="card">
+  <h2>Add Video</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="add-grid">
+      <div class="form-group" style="margin:0">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {% if form.title.errors %}<ul class="error-list">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group" style="margin:0">
+        <label for="{{ form.url.id_for_label }}">{{ form.url.label }}</label>
+        {{ form.url }}
+        {% if form.url.errors %}<ul class="error-list">{% for e in form.url.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group" style="margin:0">
+        <label for="{{ form.order.id_for_label }}">{{ form.order.label }}</label>
+        {{ form.order }}
+      </div>
+    </div>
+    <button type="submit" class="btn" style="margin-top:1rem">Add</button>
+  </form>
+</div>
+
+<div class="card" style="padding: 1.75rem 1.75rem 0.5rem">
+  <h2>Current Videos ({{ videos.count }})</h2>
+  {% if videos %}
+  {% for v in videos %}
+  <div class="video-row">
+    <div class="video-order">{{ v.order }}</div>
+    <div class="video-info">
+      <strong>{{ v.title }}</strong>
+      <a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.url }}</a>
+    </div>
+    <form method="post" action="{% url 'delete_training_video' v.pk %}"
+          onsubmit="return confirm('Remove this video?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty">No videos yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "scheduler/base.html" %}
+{% block title %}Schedule — {{ friday|date:"j F Y" }}{% endblock %}
+{% block extra_style %}
+  .week-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  }
+  .week-nav a {
+  color: #1b4332;
+  text-decoration: none;
+  font-size: 1.5rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  }
+  .week-nav a:hover { background: #d8f3dc; }
+  .week-label { font-size: 1.2rem; font-weight: 700; color: #1b4332; }
+  .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+  .stat {
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.65rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  font-size: 0.85rem;
+  color: #666;
+  }
+  .stat strong { display: block; font-size: 1.3rem; color: #1b4332; }
+  .assign-form { display: flex; gap: 0.5rem; align-items: center; }
+  .assign-form select {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  border: 1.5px solid #ccc;
+  border-radius: 5px;
+  }
+  .assign-form select:focus { border-color: #1b4332; outline: none; }
+  .assign-form button {
+  padding: 0.4rem 0.85rem;
+  background: #1b4332;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  }
+  .assign-form button:hover { background: #2d6a4f; }
+  option:disabled { color: #bbb; }
+  .mosque-name { font-weight: 600; }
+  .mosque-meta { color: #888; font-size: 0.8rem; margin-top: 0.1rem; }
+  .req-tag { color: #c0392b; font-size: 0.75rem; }
+  .empty-state { text-align: center; padding: 3rem; color: #888; }
+{% endblock %}
+{% block content %}
+  <h1>Jumuah Schedule</h1>
+  <p class="subtitle">Assign an imam to each mosque request for the selected Friday.</p>
+  <div class="week-nav">
+    <a href="?week={{ prev_friday|date:'Y-m-d' }}" title="Previous week">&#8592;</a>
+    <span class="week-label">Friday, {{ friday|date:"j F Y" }}</span>
+    <a href="?week={{ next_friday|date:'Y-m-d' }}" title="Next week">&#8594;</a>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <strong>{{ total_mosques }}</strong> Requests
+    </div>
+    <div class="stat">
+      <strong>{{ total_assigned }}</strong> Assigned
+    </div>
+    <div class="stat">
+      <strong>{{ total_unassigned }}</strong> Unassigned
+    </div>
+  </div>
+  {% if request_rows %}
+    <div class="card" style="padding:0; overflow:hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>Mosque</th>
+            <th>Attendees</th>
+            <th>Assign Imam</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in request_rows %}
+            <tr>
+              <td>
+                <div class="mosque-name">{{ row.wr.mosque.name }}</div>
+                <div class="mosque-meta">{{ row.wr.mosque.address }}</div>
+                {% if row.wr.mosque.requires_imam %}<div class="req-tag">Cannot run without imam</div>{% endif %}
+              </td>
+              <td>{{ row.wr.mosque.attendees }}</td>
+              <td>
+                <form method="post" class="assign-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="week" value="{{ friday|date:'Y-m-d' }}">
+                  <input type="hidden" name="request_id" value="{{ row.wr.pk }}">
+                  <select name="imam_id">
+                    <option value="">— Unassigned —</option>
+                    {% for opt in row.imam_options %}
+                      <option value="{{ opt.imam.pk }}"
+                              {% if opt.imam.pk == row.current_imam_id %}selected{% endif %}
+                              {% if opt.busy or opt.untrained %}disabled{% endif %}>
+                        {{ opt.imam.name }}
+                        {% if opt.untrained %}
+                          (not trained)
+                        {% elif opt.busy %}
+                          (assigned)
+                        {% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit">Save</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      No mosque requests for this Friday.
+      <br>
+      Mosques can request dates from their portal.
+    </div>
+  {% endif %}
+{% endblock %}

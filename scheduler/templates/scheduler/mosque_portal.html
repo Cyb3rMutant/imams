@@ -1,0 +1,124 @@
+{% extends "scheduler/base.html" %}
+{% block title %}{{ mosque.name }} — Mosque Portal{% endblock %}
+{% block extra_style %}
+  .portal-header { margin-bottom: 1.5rem; }
+  .portal-header h1 { margin-bottom: 0.2rem; }
+  .portal-header .meta { color: #777; font-size: 0.875rem; }
+  .settings-row { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+  .settings-row .form-group { margin: 0; }
+  .inline-field { display: flex; align-items: center; gap: 0.5rem; }
+  .inline-field label { margin: 0; font-weight: 400; font-size: 0.9rem; white-space: nowrap; }
+  .inline-field input[type=number] { width: 90px; }
+  .checkbox-row { display: flex; align-items: center; gap: 0.5rem; }
+  .checkbox-row input[type=checkbox] { width: auto; accent-color: #1b4332; }
+  .checkbox-row label { margin: 0; font-weight: 400; font-size: 0.9rem; }
+  .friday-list { display: flex; flex-direction: column; }
+  .friday-row { display: flex; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid #f0ede8; gap: 1rem; }
+  .friday-row:last-child { border-bottom: none; }
+  .friday-row:hover { background: #faf9f6; }
+  .friday-date { min-width: 140px; font-weight: 600; font-size: 0.9rem; }
+  .friday-status { flex: 1; }
+  .friday-action { flex-shrink: 0; }
+  .preferred-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .preferred-row select { max-width: 260px; }
+{% endblock %}
+{% block content %}
+  <div class="portal-header">
+    <h1>{{ mosque.name }}</h1>
+    <p class="meta">ID: {{ mosque.id }} &nbsp;·&nbsp; {{ mosque.phone }}</p>
+  </div>
+  <!-- ── Settings ── -->
+  <div class="card">
+    <h2>Mosque Settings</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="settings-row">
+        <div class="inline-field">
+          <label for="{{ settings_form.attendees.id_for_label }}">{{ settings_form.attendees.label }}</label>
+          {{ settings_form.attendees }}
+        </div>
+        <div class="checkbox-row">
+          {{ settings_form.requires_imam }}
+          <label for="{{ settings_form.requires_imam.id_for_label }}">{{ settings_form.requires_imam.label }}</label>
+        </div>
+        <button type="submit" class="btn btn-sm">Save</button>
+      </div>
+      {% if settings_form.attendees.errors or settings_form.requires_imam.errors %}
+        <p style="color:#c0392b; font-size:0.85rem; margin-top:0.5rem">Please correct the errors above.</p>
+      {% endif %}
+    </form>
+  </div>
+  <!-- ── Preferred Imam ── -->
+  <div class="card">
+    <h2>Preferred Imam</h2>
+    {% if past_imams %}
+      <p style="color:#666; font-size:0.875rem; margin-bottom:1rem">
+        Select an Imam you've worked with before to mark as your preference.
+        The admin will see this when scheduling.
+      </p>
+      <form method="post" action="{% url 'set_preferred_imam' %}">
+        {% csrf_token %}
+        <div class="preferred-row">
+          <select name="preferred_imam_id">
+            <option value="">— No preference —</option>
+            {% for imam in past_imams %}
+              <option value="{{ imam.pk }}"
+                      {% if mosque.preferred_imam_id == imam.pk %}selected{% endif %}>{{ imam.name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm">Save Preference</button>
+        </div>
+      </form>
+      {% if mosque.preferred_imam %}
+        <p style="margin-top:0.75rem; font-size:0.875rem; color:#1b4332">
+          ★ Currently preferred: <strong>{{ mosque.preferred_imam.name }}</strong>
+        </p>
+      {% endif %}
+    {% else %}
+      <p class="empty" style="text-align:left; padding:0; color:#aaa">
+        You'll be able to set a preferred Imam after your first Jumuah.
+      </p>
+    {% endif %}
+  </div>
+  <!-- ── Friday list ── -->
+  <div class="card" style="padding:0; overflow:hidden">
+    <div style="padding:1.1rem 1.25rem 0.75rem;
+                border-bottom:1px solid #f0ede8">
+      <h2 style="margin:0">Upcoming Fridays</h2>
+    </div>
+    <div class="friday-list">
+      {% for row in friday_rows %}
+        <div class="friday-row">
+          <div class="friday-date">{{ row.date|date:"j F Y" }}</div>
+          <div class="friday-status">
+            {% if row.week_request %}
+              {% if row.week_request.is_assigned %}
+                <span class="badge badge-green">{{ row.week_request.assignment.imam.name }}</span>
+              {% else %}
+                <span class="badge badge-amber">Requested — awaiting imam</span>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="friday-action">
+            {% if row.week_request %}
+              {% if not row.week_request.is_assigned %}
+                <form method="post"
+                      action="{% url 'cancel_week_request' row.week_request.pk %}"
+                      onsubmit="return confirm('Cancel this request?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                </form>
+              {% endif %}
+            {% else %}
+              <form method="post" action="{% url 'request_friday' %}">
+                {% csrf_token %}
+                <input type="hidden" name="jumuah_date" value="{{ row.date|date:'Y-m-d' }}">
+                <button type="submit" class="btn btn-sm">Request</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

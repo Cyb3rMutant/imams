@@ -1,0 +1,107 @@
+{% extends "scheduler/base.html" %}
+{% block title %}{{ imam.name }} — Imam Portal{% endblock %}
+
+{% block extra_style %}
+.avail-row { display: flex; align-items: center; padding: 0.65rem 1rem; border-bottom: 1px solid #f0ede8; gap: 1rem; }
+.avail-row:last-child { border-bottom: none; }
+.avail-row:hover { background: #faf9f6; }
+.avail-date { min-width: 140px; font-weight: 600; font-size: 0.875rem; }
+.avail-status { flex: 1; font-size: 0.82rem; color: #888; }
+.avail-action { flex-shrink: 0; }
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem">
+  <h1>{{ imam.name }}</h1>
+  <p class="subtitle">ID: {{ imam.id }} &nbsp;·&nbsp; {{ imam.phone }}</p>
+</div>
+
+{% if not is_trained %}
+<div style="background:#fff3cd; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.9rem">
+  <span style="font-size:1.3rem">⚠</span>
+  <div>
+    <strong style="color:#7d5a00">Training required</strong>
+    <div style="font-size:0.875rem; color:#7d5a00; margin-top:0.15rem">
+      Complete all training videos before you can be assigned.
+      <a href="{% url 'imam_training' %}" style="color:#7d5a00; font-weight:700">Go to training →</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Upcoming bookings -->
+<div class="card">
+  <h2>Upcoming Bookings</h2>
+  {% if upcoming %}
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Mosque</th><th>Address</th><th>Attendees</th></tr>
+    </thead>
+    <tbody>
+      {% for a in upcoming %}
+      <tr>
+        <td><strong>{{ a.week_request.jumuah_date|date:"j F Y" }}</strong></td>
+        <td>{{ a.week_request.mosque.name }}</td>
+        <td style="color:#888; font-size:0.85rem">{{ a.week_request.mosque.address }}</td>
+        <td>{{ a.week_request.mosque.attendees }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No upcoming bookings yet.</p>
+  {% endif %}
+</div>
+
+<!-- Availability -->
+<div class="card" style="padding:0; overflow:hidden">
+  <div style="padding:1.1rem 1.25rem 0.75rem; border-bottom:1px solid #f0ede8">
+    <h2 style="margin:0">My Availability</h2>
+    <p style="font-size:0.82rem; color:#888; margin-top:0.25rem">Mark Fridays you're unavailable. The admin will see this when scheduling.</p>
+  </div>
+  {% for row in availability_rows %}
+  <div class="avail-row">
+    <div class="avail-date">{{ row.date|date:"j F Y" }}</div>
+    <div class="avail-status">
+      {% if row.assigned %}
+        <span class="badge badge-green">Assigned</span>
+      {% elif row.unavailable %}
+        <span class="badge badge-red">Unavailable</span>
+      {% endif %}
+    </div>
+    <div class="avail-action">
+      {% if not row.too_soon %}
+      <form method="post" action="{% url 'toggle_unavailability' %}">
+        {% csrf_token %}
+        <input type="hidden" name="jumuah_date" value="{{ row.date|date:'Y-m-d' }}">
+        {% if row.unavailable %}
+        <button type="submit" class="btn btn-sm btn-ghost">Mark Available</button>
+        {% else %}
+        <button type="submit" class="btn btn-sm btn-danger">Mark Unavailable</button>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Past bookings -->
+{% if past %}
+<div class="card">
+  <h2>Past Bookings</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Mosque</th><th>Attendees</th></tr></thead>
+    <tbody>
+      {% for a in past %}
+      <tr>
+        <td style="color:#999">{{ a.week_request.jumuah_date|date:"j F Y" }}</td>
+        <td style="color:#999">{{ a.week_request.mosque.name }}</td>
+        <td style="color:#999">{{ a.week_request.mosque.attendees }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
