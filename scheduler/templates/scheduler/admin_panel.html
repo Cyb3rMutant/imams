@@ -68,6 +68,8 @@
   .video-info a { font-size: 0.78rem; color: #1b4332; word-break: break-all; }
   /* Add video grid */
   .add-grid { display: grid; grid-template-columns: 2fr 2fr 80px; gap: 0.75rem; align-items: end; }
+  /* Stars */
+  .stars { color: #f59e0b; letter-spacing: 0.05em; }
   /* Quiz */
   .question-admin { border: 1px solid #f0ede8; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 0.75rem; }
   .question-admin-text { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.4rem; }
@@ -85,6 +87,7 @@
     <a href="#imams">Imams</a>
     <a href="#training">Videos</a>
     <a href="#quiz">Quiz</a>
+    <a href="#reviews">Reviews</a>
   </div>
   <!-- ══ SCHEDULE ══════════════════════════════════════════════════════════════ -->
   <div class="card" id="schedule">
@@ -368,6 +371,40 @@
       {% endfor %}
     {% else %}
       <p class="empty">No quiz questions yet.</p>
+    {% endif %}
+  </div>
+  <!-- ══ REVIEWS ═══════════════════════════════════════════════════════════════ -->
+  <div class="card" id="reviews">
+    <div class="section-heading">
+      Imam Reviews <span class="count">({{ reviews|length }})</span>
+    </div>
+    {% if reviews %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Mosque</th>
+            <th>Imam</th>
+            <th>Rating</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reviews %}
+            <tr>
+              <td style="color:#999; white-space:nowrap">{{ r.assignment.week_request.jumuah_date|date:"j F Y" }}</td>
+              <td><strong>{{ r.assignment.week_request.mosque.name }}</strong></td>
+              <td>{{ r.assignment.imam.name }}</td>
+              <td class="stars">
+                {% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}
+              </td>
+              <td style="color:#666; font-size:0.85rem">{{ r.comment }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No reviews yet.</p>
     {% endif %}
   </div>
 {% endblock %}

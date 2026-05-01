@@ -21,6 +21,20 @@
   .friday-action { flex-shrink: 0; }
   .preferred-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
   .preferred-row select { max-width: 260px; }
+  .past-row { display: flex; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid #f0ede8; gap: 1rem; flex-wrap: wrap; }
+  .past-row:last-child { border-bottom: none; }
+  .past-date { min-width: 130px; font-weight: 600; font-size: 0.875rem; color: #999; }
+  .past-imam { flex: 1; font-size: 0.875rem; min-width: 120px; }
+  /* CSS-only star picker — inputs ordered 5→1, displayed right→left via row-reverse, so clicking 3 highlights 3,2,1 */
+  .star-pick { display: inline-flex; flex-direction: row-reverse; gap: 0.1rem; }
+  .star-pick input[type=radio] { display: none; }
+  .star-pick label { font-size: 1.5rem; color: #ddd; cursor: pointer; line-height: 1; }
+  .star-pick input:checked ~ label { color: #f59e0b; }
+  .star-pick label:hover, .star-pick label:hover ~ label { color: #f59e0b; }
+  .stars-display { color: #f59e0b; font-size: 1.1rem; letter-spacing: 0.05em; }
+  .review-form { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem; }
+  .review-form input[type=text] { width: 180px; font-size: 0.82rem; padding: 0.3rem 0.5rem; }
+  .existing-comment { color: #666; font-size: 0.82rem; font-style: italic; }
 {% endblock %}
 {% block content %}
   <div class="portal-header">
@@ -40,6 +54,10 @@
         <div class="checkbox-row">
           {{ settings_form.requires_imam }}
           <label for="{{ settings_form.requires_imam.id_for_label }}">{{ settings_form.requires_imam.label }}</label>
+        </div>
+        <div class="checkbox-row">
+          {{ settings_form.provides_transport }}
+          <label for="{{ settings_form.provides_transport.id_for_label }}">{{ settings_form.provides_transport.label }}</label>
         </div>
         <button type="submit" class="btn btn-sm">Save</button>
       </div>
@@ -80,6 +98,61 @@
       </p>
     {% endif %}
   </div>
+  <!-- ── Past bookings & reviews ── -->
+  {% if past_rows %}
+  <div class="card" style="padding:0; overflow:hidden">
+    <div style="padding:1.1rem 1.25rem 0.75rem; border-bottom:1px solid #f0ede8">
+      <h2 style="margin:0">Past Jumuahs</h2>
+    </div>
+    {% for row in past_rows %}
+      <div class="past-row">
+        <div class="past-date">{{ row.assignment.week_request.jumuah_date|date:"j F Y" }}</div>
+        <div class="past-imam">{{ row.assignment.imam.name }}</div>
+        <div style="flex-shrink:0">
+          {% if row.review %}
+            <div>
+              <span class="stars-display">
+                {% for i in "12345" %}{% if forloop.counter <= row.review.rating %}★{% else %}☆{% endif %}{% endfor %}
+              </span>
+            </div>
+            {% if row.review.comment %}
+              <div class="existing-comment">"{{ row.review.comment }}"</div>
+            {% endif %}
+            <form method="post" action="{% url 'submit_review' row.assignment.pk %}" style="margin-top:0.4rem">
+              {% csrf_token %}
+              <div class="star-pick" id="stars-edit-{{ row.assignment.pk }}">
+                {% for val in "54321" %}
+                  <input type="radio" name="rating" id="s{{ row.assignment.pk }}-{{ val }}" value="{{ val }}"
+                         {% if val == row.review.rating|stringformat:"s" %}checked{% endif %}>
+                  <label for="s{{ row.assignment.pk }}-{{ val }}">★</label>
+                {% endfor %}
+              </div>
+              <div class="review-form">
+                <input type="text" name="comment" value="{{ row.review.comment }}" placeholder="Comment (optional)">
+                <button type="submit" class="btn btn-sm btn-ghost">Update</button>
+              </div>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'submit_review' row.assignment.pk %}">
+              {% csrf_token %}
+              <div class="star-pick" id="stars-{{ row.assignment.pk }}">
+                <input type="radio" name="rating" id="s{{ row.assignment.pk }}-5" value="5"><label for="s{{ row.assignment.pk }}-5">★</label>
+                <input type="radio" name="rating" id="s{{ row.assignment.pk }}-4" value="4"><label for="s{{ row.assignment.pk }}-4">★</label>
+                <input type="radio" name="rating" id="s{{ row.assignment.pk }}-3" value="3"><label for="s{{ row.assignment.pk }}-3">★</label>
+                <input type="radio" name="rating" id="s{{ row.assignment.pk }}-2" value="2"><label for="s{{ row.assignment.pk }}-2">★</label>
+                <input type="radio" name="rating" id="s{{ row.assignment.pk }}-1" value="1"><label for="s{{ row.assignment.pk }}-1">★</label>
+              </div>
+              <div class="review-form">
+                <input type="text" name="comment" placeholder="Comment (optional)">
+                <button type="submit" class="btn btn-sm">Submit Review</button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   <!-- ── Friday list ── -->
   <div class="card" style="padding:0; overflow:hidden">
     <div style="padding:1.1rem 1.25rem 0.75rem;

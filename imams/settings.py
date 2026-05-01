@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-m1vdd=rmicc-d7d#!!pl7t3-t0qjdc1=el-fjt+kewz5q1yjzw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0", "192.168.0.219", "localhost"]
+ALLOWED_HOSTS = ["0.0.0.0", "192.168.0.219", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -37,8 +37,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_crontab",
     "scheduler",
 ]
+
+CRONJOBS = [
+    ("0 20 * * 1", "django.core.management.call_command", ["auto_assign_friday"]),
+]
+
+CRONTAB_DJANGO_MANAGE_PATH = "/app/manage.py"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

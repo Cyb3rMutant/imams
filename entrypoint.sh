@@ -15,6 +15,9 @@ python manage.py migrate scheduler
 python manage.py migrate
 python manage.py migrate
 python manage.py createsuperuser --noinput
+python manage.py crontab add
+
+service cron start
 
 # Explanation for why we should run on 0.0.0.0 instead of 127.0.0.1 as default
 # ...https://itecnote.com/tecnote/docker-app-server-ip-address-127-0-0-1-difference-of-0-0-0-0-ip/

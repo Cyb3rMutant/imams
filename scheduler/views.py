@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from .forms import ImamForm, MosqueForm, MosqueSettingsForm, TrainingVideoForm
 from .models import (
-    Assignment, Imam, ImamUnavailability, Mosque,
+    Assignment, Imam, ImamReview, ImamUnavailability, Mosque,
     QuizAttempt, QuizChoice, QuizQuestion,
     TrainingProgress, TrainingVideo, WeekRequest,
 )
@@ -34,27 +34,6 @@ def _trained_imam_ids() -> set[int] | None:
         return None  # no quiz configured → no training gate
     return set(QuizAttempt.objects.filter(passed=True).values_list("imam_id", flat=True))
 
-
-def _auto_assign(wr) -> None:
-    jumuah_date = wr.jumuah_date
-    unavailable_ids = set(
-        ImamUnavailability.objects.filter(jumuah_date=jumuah_date).values_list("imam_id", flat=True)
-    )
-    already_assigned_ids = set(
-        Assignment.objects.filter(week_request__jumuah_date=jumuah_date).values_list("imam_id", flat=True)
-    )
-    trained_ids = _trained_imam_ids()
-    pool = [
-        i for i in Imam.objects.order_by("name")
-        if i.pk not in unavailable_ids
-        and i.pk not in already_assigned_ids
-        and (trained_ids is None or i.pk in trained_ids)
-    ]
-    if not pool:
-        return
-    preferred_id = wr.mosque.preferred_imam_id
-    imam = next((i for i in pool if i.pk == preferred_id), pool[0])
-    Assignment.objects.create(week_request=wr, imam=imam)
 
 
 # ── Portal auth decorators ────────────────────────────────────────────────────
@@ -189,18 +168,30 @@ def mosque_portal(request):
     }
     friday_rows = [{"date": f, "week_request": existing.get(f)} for f in _upcoming_fridays()]
 
-    # Imams this mosque has worked with before
-    past_imam_ids = list(
-        Assignment.objects.filter(week_request__mosque=mosque)
-        .values_list("imam_id", flat=True)
-        .distinct()
+    # Past assignments with review info
+    past_assignments = (
+        Assignment.objects
+        .filter(week_request__mosque=mosque, week_request__jumuah_date__lt=date.today())
+        .select_related("week_request", "imam")
+        .order_by("-week_request__jumuah_date")
     )
+    past_rows = []
+    past_imam_ids = set()
+    for a in past_assignments:
+        past_imam_ids.add(a.imam_id)
+        try:
+            review = a.review
+        except ImamReview.DoesNotExist:
+            review = None
+        past_rows.append({"assignment": a, "review": review})
+
     past_imams = Imam.objects.filter(pk__in=past_imam_ids).order_by("name")
 
     return render(request, "scheduler/mosque_portal.html", {
         "mosque": mosque,
         "settings_form": settings_form,
         "friday_rows": friday_rows,
+        "past_rows": past_rows,
         "past_imams": past_imams,
     })
 
@@ -233,9 +224,7 @@ def request_friday(request):
             jumuah_date = date.fromisoformat(date_str)
             today = date.today()
             if jumuah_date.weekday() == 4 and jumuah_date >= today and jumuah_date <= today + timedelta(days=60):
-                wr, created = WeekRequest.objects.get_or_create(mosque=mosque, jumuah_date=jumuah_date)
-                if created:
-                    _auto_assign(wr)
+                WeekRequest.objects.get_or_create(mosque=mosque, jumuah_date=jumuah_date)
         except ValueError:
             pass
     return redirect("mosque_portal")
@@ -247,6 +236,28 @@ def cancel_week_request(request, pk):
     wr = get_object_or_404(WeekRequest, pk=pk, mosque=mosque)
     if not wr.is_assigned:
         wr.delete()
+    return redirect("mosque_portal")
+
+
+@mosque_login_required
+def submit_review(request, pk):
+    if request.method != "POST":
+        return redirect("mosque_portal")
+    mosque = get_object_or_404(Mosque, pk=request.session["mosque_id"])
+    assignment = get_object_or_404(Assignment, pk=pk, week_request__mosque=mosque)
+    if assignment.week_request.jumuah_date >= date.today():
+        return redirect("mosque_portal")
+    rating_str = request.POST.get("rating", "")
+    comment = request.POST.get("comment", "").strip()
+    try:
+        rating = int(rating_str)
+        if 1 <= rating <= 5:
+            ImamReview.objects.update_or_create(
+                assignment=assignment,
+                defaults={"rating": rating, "comment": comment},
+            )
+    except ValueError:
+        pass
     return redirect("mosque_portal")
 
 
@@ -463,6 +474,9 @@ def admin_panel(request):
     videos = TrainingVideo.objects.all()
     questions = QuizQuestion.objects.prefetch_related("choices").all()
     has_quiz = QuizQuestion.objects.exists()
+    reviews = ImamReview.objects.select_related(
+        "assignment__week_request__mosque", "assignment__imam"
+    ).order_by("-created_at")
 
     return render(request, "scheduler/admin_panel.html", {
         # schedule
@@ -482,4 +496,6 @@ def admin_panel(request):
         "video_form": video_form,
         # quiz
         "questions": questions,
+        # reviews
+        "reviews": reviews,
     })

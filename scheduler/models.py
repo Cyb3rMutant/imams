@@ -9,6 +9,7 @@ class Mosque(models.Model):
     phone = models.CharField(max_length=20)
     attendees = models.PositiveIntegerField(default=0)
     requires_imam = models.BooleanField(default=True)
+    provides_transport = models.BooleanField(default=False)
     preferred_imam = models.ForeignKey(
         "Imam",
         on_delete=models.SET_NULL,
@@ -107,6 +108,19 @@ class Assignment(models.Model):
 
     class Meta:
         ordering = ["week_request__jumuah_date"]
+
+
+class ImamReview(models.Model):
+    assignment = models.OneToOneField(Assignment, on_delete=models.CASCADE, related_name="review")
+    rating = models.PositiveSmallIntegerField()  # 1–5
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.assignment.week_request.mosque} → {self.assignment.imam}: {self.rating}★"
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class QuizQuestion(models.Model):

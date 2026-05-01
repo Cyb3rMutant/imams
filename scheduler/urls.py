@@ -18,6 +18,7 @@ urlpatterns = [
     path("portal/mosque/request/", views.request_friday, name="request_friday"),
     path("portal/mosque/cancel/<int:pk>/", views.cancel_week_request, name="cancel_week_request"),
     path("portal/mosque/preferred/", views.set_preferred_imam, name="set_preferred_imam"),
+    path("portal/mosque/review/<int:pk>/", views.submit_review, name="submit_review"),
     # Imam portal
     path("portal/imam/", views.imam_portal, name="imam_portal"),
     path("portal/imam/availability/", views.toggle_unavailability, name="toggle_unavailability"),

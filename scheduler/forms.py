@@ -14,10 +14,11 @@ class MosqueForm(forms.ModelForm):
 class MosqueSettingsForm(forms.ModelForm):
     class Meta:
         model = Mosque
-        fields = ["attendees", "requires_imam"]
+        fields = ["attendees", "requires_imam", "provides_transport"]
         labels = {
             "attendees": "Expected Attendees",
             "requires_imam": "Jumuah cannot run without an imam",
+            "provides_transport": "We can provide transport for the imam",
         }
 
 
