@@ -1,6 +1,13 @@
 from django import forms
 
 from .models import Imam, Mosque, TrainingVideo
+from .utils import get_postcode_coords
+
+
+def _validate_postcode(value: str) -> str:
+    if get_postcode_coords(value) is None:
+        raise forms.ValidationError("Please enter a valid UK postcode.")
+    return value.strip().upper()
 
 
 class MosqueForm(forms.ModelForm):
@@ -9,6 +16,9 @@ class MosqueForm(forms.ModelForm):
         fields = ["name", "address", "phone"]
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
         labels = {"name": "Mosque Name", "phone": "Contact Number"}
+
+    def clean_address(self):
+        return _validate_postcode(self.cleaned_data["address"])
 
 
 class MosqueSettingsForm(forms.ModelForm):
@@ -28,6 +38,9 @@ class ImamForm(forms.ModelForm):
         fields = ["name", "address", "phone"]
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
         labels = {"name": "Full Name", "phone": "Contact Number"}
+
+    def clean_address(self):
+        return _validate_postcode(self.cleaned_data["address"])
 
 
 class TrainingVideoForm(forms.ModelForm):

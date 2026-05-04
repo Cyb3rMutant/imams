@@ -83,13 +83,16 @@ WSGI_APPLICATION = "imams.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.mysql",
         "NAME": "p",
         "USER": "p",
         "PASSWORD": "p",
         "HOST": "db",
-        "PORT": "5432",
+        "PORT": "3306",
         "ATOMIC_REQUESTS": True,
+        "OPTIONS": {
+            "charset": "utf8mb4",
+        },
     }
 }
 

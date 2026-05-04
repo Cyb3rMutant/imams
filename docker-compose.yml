@@ -10,6 +10,7 @@ services:
       dockerfile: Dockerfile
     # Restart policy
     environment:
+      DJANGO_SETTINGS_MODULE: "imams.settings"
       DEBUG: 1
       TZ: "Europe/London"
       DJANGO_SUPERUSER_PASSWORD: p
@@ -32,25 +33,15 @@ services:
 
   # "db" service
   db:
-    # Name of the image to be pulled from Docker Hub.
-    image: postgres:alpine
-    # Port mapping
-    # This means that the port 5432 of the host will be mapped to the port 5432 of the container.
-    # ports:
-    # - "5432:5432"
-    #  postgres server ID if db don't work : 303081e6e8c5
-    # Environment variables
+    image: mysql:8.4
     environment:
-      POSTGRES_PASSWORD: p
-      POSTGRES_USER: p
-      POSTGRES_DB: p
-    # Restart policy
+      MYSQL_ROOT_PASSWORD: p
+      MYSQL_DATABASE: p
+      MYSQL_USER: p
+      MYSQL_PASSWORD: p
     restart: unless-stopped
-    # Volume mapping
-    # This means that the volume named "db_data" will be mapped to the directory "/var/lib/postgresql/data" of the container.
-    # The volume "db_data" will be created if it does not exist.
     volumes:
-      - db_data:/var/lib/postgresql
+      - db_data:/var/lib/mysql
   adminer:
     image: adminer
     restart: always

@@ -5,7 +5,7 @@ echo "Waiting for Postgres Database Service to start..."
 # ...https://docs.docker.com/compose/startup-order/
 # Script from ./wait-for is from:
 #...https://github.com/vishnubob/wait-for-it/blob/master/wait-for-it.sh
-./wait-for db:5432
+./wait-for db:3306
 
 python manage.py makemigrations
 python manage.py makemigrations scheduler

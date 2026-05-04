@@ -1,9 +1,10 @@
 asgiref==3.11.1
 Django==6.0.4
+django-crontab==0.7.1
 dotenv==0.9.9
 geographiclib==2.1
 geopy==2.4.1
-psycopg2==2.9.12
+mysqlclient==2.2.7
 python-dotenv==1.2.2
 sqlparse==0.5.5
 whitenoise==6.12.0

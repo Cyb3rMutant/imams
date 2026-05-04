@@ -7,8 +7,8 @@ class Mosque(models.Model):
     name = models.CharField(max_length=200)
     address = models.TextField()
     phone = models.CharField(max_length=20)
-    attendees = models.PositiveIntegerField(default=0)
-    requires_imam = models.BooleanField(default=True)
+    attendees = models.PositiveIntegerField(default=100)
+    requires_imam = models.BooleanField(default=False)
     provides_transport = models.BooleanField(default=False)
     preferred_imam = models.ForeignKey(
         "Imam",
@@ -63,8 +63,12 @@ class TrainingVideo(models.Model):
 
 
 class TrainingProgress(models.Model):
-    imam = models.ForeignKey(Imam, on_delete=models.CASCADE, related_name="training_progress")
-    video = models.ForeignKey(TrainingVideo, on_delete=models.CASCADE, related_name="completions")
+    imam = models.ForeignKey(
+        Imam, on_delete=models.CASCADE, related_name="training_progress"
+    )
+    video = models.ForeignKey(
+        TrainingVideo, on_delete=models.CASCADE, related_name="completions"
+    )
     completed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -72,7 +76,9 @@ class TrainingProgress(models.Model):
 
 
 class ImamUnavailability(models.Model):
-    imam = models.ForeignKey(Imam, on_delete=models.CASCADE, related_name="unavailabilities")
+    imam = models.ForeignKey(
+        Imam, on_delete=models.CASCADE, related_name="unavailabilities"
+    )
     jumuah_date = models.DateField()
 
     class Meta:
@@ -81,7 +87,9 @@ class ImamUnavailability(models.Model):
 
 
 class WeekRequest(models.Model):
-    mosque = models.ForeignKey(Mosque, on_delete=models.CASCADE, related_name="week_requests")
+    mosque = models.ForeignKey(
+        Mosque, on_delete=models.CASCADE, related_name="week_requests"
+    )
     jumuah_date = models.DateField()
     submitted_at = models.DateTimeField(auto_now_add=True)
 
@@ -111,7 +119,9 @@ class Assignment(models.Model):
 
 
 class ImamReview(models.Model):
-    assignment = models.OneToOneField(Assignment, on_delete=models.CASCADE, related_name="review")
+    assignment = models.OneToOneField(
+        Assignment, on_delete=models.CASCADE, related_name="review"
+    )
     rating = models.PositiveSmallIntegerField()  # 1–5
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -135,7 +145,9 @@ class QuizQuestion(models.Model):
 
 
 class QuizChoice(models.Model):
-    question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="choices")
+    question = models.ForeignKey(
+        QuizQuestion, on_delete=models.CASCADE, related_name="choices"
+    )
     text = models.CharField(max_length=300)
     is_correct = models.BooleanField(default=False)
 
@@ -147,7 +159,9 @@ class QuizChoice(models.Model):
 
 
 class QuizAttempt(models.Model):
-    imam = models.OneToOneField(Imam, on_delete=models.CASCADE, related_name="quiz_attempt")
+    imam = models.OneToOneField(
+        Imam, on_delete=models.CASCADE, related_name="quiz_attempt"
+    )
     passed = models.BooleanField(default=False)
     score = models.PositiveSmallIntegerField(default=0)
     total = models.PositiveSmallIntegerField(default=0)

@@ -30,6 +30,7 @@ def within_miles(
     Returns True (don't exclude) if either postcode can't be geocoded.
     Pass a shared dict as `cache` to avoid redundant API calls across many checks.
     """
+
     def lookup(pc: str) -> tuple[float, float] | None:
         key = pc.strip().upper().replace(" ", "")
         if cache is not None:
